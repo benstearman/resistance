@@ -1,29 +1,7 @@
 import 'package:flutter/material.dart';
-// Corrected imports pointing to the 'screens' folder
-import 'screens/map_screen.dart';
-import 'screens/events_screen.dart';
-import 'screens/chat_screen.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Resistance Map',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
-        useMaterial3: true,
-      ),
-      home: const MainScreen(),
-    );
-  }
-}
+import 'map_screen.dart';
+import 'events_screen.dart';
+import 'chat_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -51,6 +29,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // We don't use an AppBar here because each screen has its own
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -68,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFFB71C1C),
+        selectedItemColor: const Color(0xFFB71C1C), // Resistance Red
         onTap: _onItemTapped,
       ),
     );
