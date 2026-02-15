@@ -17,12 +17,11 @@ class ProtestEvent {
     required this.longitude,
   });
 
-  // Factory to create an Event from a Firestore Document
   factory ProtestEvent.fromSnapshot(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ProtestEvent(
       id: doc.id,
-      title: data['title'] ?? 'Untitled Action',
+      title: data['title'] ?? 'Untitled',
       description: data['description'] ?? '',
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
@@ -30,7 +29,6 @@ class ProtestEvent {
     );
   }
 
-  // Convert Event to a Map for saving to Firestore
   Map<String, dynamic> toMap() {
     return {
       'title': title,
