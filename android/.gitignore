@@ -1,3 +1,15 @@
+# Ignore the lock file if you don't want to pin every dependency version strictly
+pubspec.lock
+
+# Ensure generated platform files are ignored
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/lib/firebase_options.dart
+
+# Web related
+.firebaserc
+firebase.json
+
 gradle-wrapper.jar
 /.gradle
 /captures/
