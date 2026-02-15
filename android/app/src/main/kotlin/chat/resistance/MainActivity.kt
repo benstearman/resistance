@@ -1,4 +1,4 @@
-package com.example.resistance
+package chat.resistance
 
 import io.flutter.embedding.android.FlutterActivity
 

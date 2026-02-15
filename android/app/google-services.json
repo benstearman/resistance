@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "199637025662",
+    "project_id": "resistancechat",
+    "storage_bucket": "resistancechat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199637025662:android:c3be2aecf0c6270be2a92f",
+        "android_client_info": {
+          "package_name": "com.example.resistance"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC_gkNXWkJ1DQ7aB4uuULnflP4eAAVLeT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
