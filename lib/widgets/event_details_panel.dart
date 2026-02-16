@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/event.dart';
+import '../screens/event_edit_screen.dart'; // Import the Edit Screen
 
 class EventDetailsPanel extends StatelessWidget {
   final ProtestEvent event;
@@ -10,7 +11,7 @@ class EventDetailsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40), // Extra bottom padding for safety
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -20,7 +21,7 @@ class EventDetailsPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header Line (Handle for dragging visually)
+          // 1. Header Line
           Center(
             child: Container(
               width: 40,
@@ -62,7 +63,6 @@ class EventDetailsPanel extends StatelessWidget {
             event.locationName.isNotEmpty ? event.locationName : 'Unknown Location',
             isBold: true
           ),
-          // Coordinates (subtle)
           Padding(
             padding: const EdgeInsets.only(left: 36, bottom: 10),
             child: Text(
@@ -91,20 +91,49 @@ class EventDetailsPanel extends StatelessWidget {
           
           const SizedBox(height: 30),
 
-          // 6. Action Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.close),
-              label: const Text('Close Details'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB71C1C),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          // 6. Action Buttons (Edit & Close)
+          Row(
+            children: [
+              // EDIT BUTTON
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // Close the panel first, then go to edit
+                    Navigator.pop(context); 
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EventEditScreen(event: event),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.edit, color: Color(0xFFB71C1C)),
+                  label: const Text('Edit', style: TextStyle(color: Color(0xFFB71C1C))),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: const BorderSide(color: Color(0xFFB71C1C)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
               ),
-            ),
+              
+              const SizedBox(width: 16),
+
+              // CLOSE BUTTON
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                  label: const Text('Close'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB71C1C),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

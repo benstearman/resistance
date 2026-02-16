@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../models/event.dart';
 import '../widgets/event_details_panel.dart';
+import 'event_edit_screen.dart';
 
 class EventsScreen extends StatelessWidget {
   const EventsScreen({super.key});
@@ -19,14 +20,10 @@ class EventsScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFB71C1C),
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () {
-          FirebaseFirestore.instance.collection('events').add({
-            'title': 'New Protest ${DateTime.now().second}',
-            'description': 'Generated from app',
-            'locationName': 'City Hall Park',
-            'timestamp': Timestamp.now(),
-            'latitude': 44.4759,
-            'longitude': -73.2121,
-          });
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const EventEditScreen()),
+          );
         },
       ),
       body: StreamBuilder<QuerySnapshot>(
