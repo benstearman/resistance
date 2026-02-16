@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../models/event.dart';
+import '../widgets/event_details_panel.dart';
 
 class EventsScreen extends StatelessWidget {
   const EventsScreen({super.key});
@@ -68,31 +69,11 @@ class EventsScreen extends StatelessWidget {
                   subtitle: Text(DateFormat('MMMM d, y • h:mm a').format(event.timestamp)),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    // Show details when tapped (Reusing the map popup style)
                     showModalBottomSheet(
                       context: context,
-                      builder: (ctx) => Container(
-                        padding: const EdgeInsets.all(20),
-                        width: double.infinity,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(event.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 10),
-                            Text(event.description),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFB71C1C),
-                                foregroundColor: Colors.white
-                              ),
-                              child: const Text("Close"),
-                            ),
-                          ],
-                        ),
-                      ),
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (ctx) => EventDetailsPanel(event: event),
                     );
                   },
                 ),

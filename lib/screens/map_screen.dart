@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event.dart';
+import '../widgets/event_details_panel.dart';
 
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
@@ -58,27 +59,9 @@ class MapScreen extends StatelessWidget {
   void _showEventDetails(BuildContext context, ProtestEvent event) {
     showModalBottomSheet(
       context: context,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(event.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Text(event.description),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB71C1C), foregroundColor: Colors.white),
-                child: const Text("Close"),
-              ),
-            ),
-          ],
-        ),
-      ),
+      isScrollControlled: true, // Allows the panel to be taller
+      backgroundColor: Colors.transparent, // Lets our panel handle the corners
+      builder: (ctx) => EventDetailsPanel(event: event),
     );
   }
 }
