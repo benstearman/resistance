@@ -14,6 +14,20 @@ class EventsScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFB71C1C),
         foregroundColor: Colors.white,
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFB71C1C),
+        child: const Icon(Icons.add, color: Colors.white),
+        onPressed: () {
+          FirebaseFirestore.instance.collection('events').add({
+            'title': 'New Protest ${DateTime.now().second}',
+            'description': 'Generated from app',
+            'locationName': 'City Hall Park',
+            'timestamp': Timestamp.now(),
+            'latitude': 44.4759,
+            'longitude': -73.2121,
+          });
+        },
+      ),
       body: StreamBuilder<QuerySnapshot>(
         // Connect to the 'events' collection in your database
         stream: FirebaseFirestore.instance.collection('events').orderBy('timestamp').snapshots(),
