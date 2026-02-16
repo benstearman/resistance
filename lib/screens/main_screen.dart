@@ -47,7 +47,9 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFFB71C1C), // Resistance Red
+        backgroundColor: const Color(0xFFB71C1C),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
         onTap: _onItemTapped,
       ),
     );
