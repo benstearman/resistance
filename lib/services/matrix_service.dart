@@ -46,7 +46,7 @@ class MatrixService {
     if (client == null) await init();
     
     // FIX: Added the second closing parenthesis here ))
-    await client!.checkHomeserver(Uri.parse("https://matrix.resistance.chat:8443"));
+    await client!.checkHomeserver(Uri.parse("https://matrix.resistance.chat"));
     
     await client!.login(
       LoginType.mLoginPassword,

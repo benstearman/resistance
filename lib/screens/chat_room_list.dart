@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/matrix_service.dart';
+import 'package:matrix/matrix.dart';
 
 class ChatRoomList extends StatelessWidget {
   const ChatRoomList({super.key});
@@ -7,14 +8,24 @@ class ChatRoomList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final client = MatrixService.instance.client!;
+    final String resistanceSpaceId = "!cUqQYleHdhIDZrVlLW:resistance.chat";
 
     return StreamBuilder(
       stream: client.onSync.stream,
       builder: (context, snapshot) {
-        final rooms = client.rooms; // Get joined rooms
+        final String resistanceSpaceId = "!cUqQYleHdhIDZrVlLW:resistance.chat";
+
+        // Filter rooms using the direct string constant for the parent relationship
+        final rooms = client.rooms.where((room) {
+          // Check for the space parent state event using the raw Matrix event type
+          final parentEvent = room.getState('m.space.parent', resistanceSpaceId);
+          
+          // Include the room if it belongs to the Resistance Space and isn't the Space itself
+          return parentEvent != null && room.id != resistanceSpaceId;
+        }).toList();
 
         if (rooms.isEmpty) {
-          return const Center(child: Text("No secure channels active."));
+          return const Center(child: Text("No Resistance channels active."));
         }
 
         return ListView.builder(
