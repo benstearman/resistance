@@ -44,8 +44,8 @@ class MatrixService {
   Future<void> login(String username, String password) async {
     if (client == null) await init();
     
-    // Use the official Matrix server or your own
-    await client!.checkHomeserver(Uri.parse("https://matrix.org"));
+    // Note the added :8443 port
+    await client!.checkHomeserver(Uri.parse("https://matrix.resistance.chat:8443");
     
     await client!.login(
       LoginType.mLoginPassword,
