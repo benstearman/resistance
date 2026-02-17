@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:matrix/matrix.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 // Database Engines
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -23,7 +25,6 @@ class MatrixService {
     }
 
     // 2. Open the Database (Memory for now to avoid file issues)
-    // In a real app, you would give this a real path like 'resistance_chat.db'
     final rawDatabase = await dbFactory.openDatabase(inMemoryDatabasePath);
 
     // 3. Initialize the Matrix Database Wrapper
@@ -35,7 +36,7 @@ class MatrixService {
     // 4. Create the Client with the new 'database' parameter
     client = Client(
       'Resistance App',
-      database: matrixDatabase, // <--- This is the fix!
+      database: matrixDatabase,
     );
 
     await client!.init();
@@ -44,8 +45,8 @@ class MatrixService {
   Future<void> login(String username, String password) async {
     if (client == null) await init();
     
-    // Note the added :8443 port
-    await client!.checkHomeserver(Uri.parse("https://matrix.resistance.chat:8443");
+    // FIX: Added the second closing parenthesis here ))
+    await client!.checkHomeserver(Uri.parse("https://matrix.resistance.chat:8443"));
     
     await client!.login(
       LoginType.mLoginPassword,
