@@ -231,7 +231,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                             margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isMe ? Colors.orange[900] : Colors.grey[300],
+                              color: isMe ? Colors.purple[900] : Colors.orange[800],
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -240,12 +240,12 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                                 if (!isMe)
                                   Text(
                                     event.senderId ?? "Unknown",
-                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white70),
                                   ),
                                 _buildMessageContent(event, isMe),
                                 Text(
                                   DateFormat('h:mm a').format(event.originServerTs),
-                                  style: TextStyle(fontSize: 8, color: isMe ? Colors.white70 : Colors.black54),
+                                  style: TextStyle(fontSize: 8, color: isMe ? Colors.white70 : Colors.white60),
                                 ),
                               ],
                             ),
