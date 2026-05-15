@@ -14,7 +14,7 @@ class EventsScreen extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Actions v1.0.24-FORCE-REFRESH', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text('Actions v1.0.25-FORCE-REFRESH', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.yellow,
         foregroundColor: Colors.black,
         actions: [
