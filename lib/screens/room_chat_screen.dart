@@ -99,23 +99,20 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
     if (isImage) {
       // MSC3916: Authenticated Media Download
       // The SDK helper Uri.getDownloadUri often returns the legacy /_matrix/media/v3 path which returns 404 on this server.
-      // We manually construct the /_matrix/client/v1/media/download path.
+      // We manually construct the /_matrix/client/v1/media/download path and use query-param auth for Web compatibility.
       
       String imageUrl = "";
+      final token = widget.room.client.accessToken;
       try {
         final uri = Uri.parse(mxcUrl!);
         final serverName = uri.host;
         final mediaId = uri.path.replaceAll('/', '');
         final homeserver = widget.room.client.homeserver.toString().replaceAll(RegExp(r'/$'), '');
-        imageUrl = "$homeserver/_matrix/client/v1/media/download/$serverName/$mediaId";
+        imageUrl = "$homeserver/_matrix/client/v1/media/download/$serverName/$mediaId?access_token=$token";
       } catch (e) {
         // Fallback to SDK if parsing fails
-        imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client).toString();
+        imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client).toString() + "&access_token=$token";
       }
-
-      final headers = {
-        'Authorization': 'Bearer ' + widget.room.client.accessToken.toString(),
-      };
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,10 +124,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                 builder: (context) => Dialog(
                   backgroundColor: Colors.transparent,
                   child: InteractiveViewer(
-                    child: Image.network(
-                      imageUrl,
-                      headers: headers,
-                    ),
+                    child: Image.network(imageUrl),
                   ),
                 ),
               );
@@ -139,7 +133,6 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
                 imageUrl,
-                headers: headers,
                 width: 250,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
