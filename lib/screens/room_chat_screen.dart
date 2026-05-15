@@ -68,10 +68,19 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
   }
 
   Widget _buildMessageContent(Event event, bool isMe) {
-    if (event.content['msgtype'] == MessageTypes.Image) {
-      final mxcUrl = event.content['url'];
-      if (mxcUrl is! String) return const Text("[Invalid Image]");
+    final msgType = event.content['msgtype'];
+    final isImageMsg = msgType == MessageTypes.Image || msgType == 'm.image';
+    final isFileMsg = msgType == MessageTypes.File || msgType == 'm.file';
+    
+    final mxcUrl = event.content['url'];
+    
+    // Check if it's an image message directly, or a file message that has an image extension
+    final bool isImage = mxcUrl is String && (
+      isImageMsg || 
+      (isFileMsg && event.body.toLowerCase().contains(RegExp(r'\.(png|jpe?g|gif|webp)$')))
+    );
 
+    if (isImage) {
       final imageUrl = Uri.parse(mxcUrl).getDownloadUri(widget.room.client);
 
       return Column(
@@ -103,6 +112,19 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                     child: Center(child: CircularProgressIndicator()),
                   );
                 },
+                errorBuilder: (context, error, stackTrace) => const SizedBox(
+                  width: 250,
+                  height: 150,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                        Text("Failed to load image", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      ]
+                    )
+                  )
+                ),
               ),
             ),
           ),
