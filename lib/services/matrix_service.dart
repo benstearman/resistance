@@ -186,6 +186,10 @@ class MatrixService {
     String actionChatRoomId = targetRoomId ?? event.roomId ?? '';
     final isNewEvent = event.id.isEmpty || event.id.startsWith('stripped_');
 
+    final currentUserId = client?.userID ?? 'UNKNOWN';
+    final isLoggedIn = client?.isLogged() ?? false;
+    print("DIAGNOSTIC: saveProtestEvent - User: $currentUserId, LoggedIn: $isLoggedIn");
+
     // Consolidate room creation logic: If we don't have a roomId, create one now.
     if (actionChatRoomId.isEmpty) {
       print("DIAGNOSTIC: Step 2 - Creating new room (needed for ${isNewEvent ? 'new' : 'update'})...");
@@ -221,11 +225,15 @@ class MatrixService {
           );
           print("DIAGNOSTIC: Linked to space successfully.");
         } catch (linkErr) {
-          print("DIAGNOSTIC: Linking FAILED: $linkErr");
-          // Non-critical, continue
+          print("DIAGNOSTIC: Linking FAILED (Non-critical): $linkErr");
         }
       } catch (createErr) {
-        throw Exception("STEP_2_FAILED (Create Room): $createErr");
+        String detailedError = createErr.toString();
+        if (createErr is MatrixException) {
+          detailedError = "[\${createErr.error}] \${createErr.errorMessage}";
+        }
+        print("DIAGNOSTIC: createRoom FAILED: $detailedError");
+        throw Exception("STEP_2_FAILED (Create Room): $detailedError");
       }
     }
 
