@@ -113,11 +113,19 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
         // Fallback to SDK if parsing fails
         imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client).toString() + "&access_token=$token";
       }
+      
+      print("DIAGNOSTIC: Constructed Image URL: " + imageUrl);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
+            onLongPress: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Image URL: " + imageUrl))
+              );
+              print("IMAGE URL DEBUG: " + imageUrl);
+            },
             onTap: () {
               showDialog(
                 context: context,
