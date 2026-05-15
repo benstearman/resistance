@@ -70,22 +70,43 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
   Widget _buildMessageContent(Event event, bool isMe) {
     final msgType = event.content['msgtype'];
     final info = event.content['info'];
-    final String? mxcUrl = event.content['url'] ?? (info is Map ? info['url'] : null);
+    final file = event.content['file'];
     
-    // DEBUG LOG - Using proper string concatenation to avoid interpolation issues in tool
-    print("DIAGNOSTIC: Message Event - ID: " + event.eventId + ", Type: " + msgType.toString() + ", Body: " + event.body + ", Content: " + event.content.toString());
+    // Check multiple possible URL locations
+    String? mxcUrl;
+    if (event.content['url'] is String) {
+      mxcUrl = event.content['url'] as String;
+    } else if (file is Map && file['url'] is String) {
+      mxcUrl = file['url'] as String;
+    } else if (info is Map && info['url'] is String) {
+      mxcUrl = info['url'] as String;
+    } else if (info is Map && info['thumbnail_url'] is String) {
+      mxcUrl = info['thumbnail_url'] as String;
+    }
+    
+    // DEBUG LOG - Using extremely safe concatenation
+    try {
+      final logId = event.eventId.toString();
+      final logType = msgType?.toString() ?? "null";
+      final logBody = event.body.toString();
+      final logContent = event.content.toString();
+      print("DIAGNOSTIC: Message Event - ID: " + logId + ", Type: " + logType + ", Body: " + logBody + ", URL: " + (mxcUrl ?? "NONE") + ", Content: " + logContent);
+    } catch (e) {
+      print("DIAGNOSTIC: Failed to log event info");
+    }
 
     final isImageMsg = msgType == MessageTypes.Image || msgType == 'm.image';
     final isFileMsg = msgType == MessageTypes.File || msgType == 'm.file';
     
     // Robust image check: Has an MXC URL and either is an image type or has image extension in body
-    final bool isImage = mxcUrl is String && mxcUrl.startsWith('mxc://') && (
+    final bool isImage = mxcUrl != null && mxcUrl.startsWith('mxc://') && (
       isImageMsg || 
-      (isFileMsg && event.body.toLowerCase().contains(RegExp(r'\.(png|jpe?g|gif|webp)$')))
+      (isFileMsg && event.body.toLowerCase().contains(RegExp(r'\.(png|jpe?g|gif|webp)$'))) ||
+      event.body.toLowerCase().contains("image")
     );
 
     if (isImage) {
-      final imageUrl = Uri.parse(mxcUrl).getDownloadUri(widget.room.client);
+      final imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -22,11 +22,20 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _currentPosition;
   bool _isSearchingZip = false;
   bool _hasCenteredInitially = false;
+  bool _isMapReady = false;
 
   @override
   void initState() {
     super.initState();
     _initLocation();
+  }
+
+  void _onMapReady() {
+    setState(() => _isMapReady = true);
+    if (_currentPosition != null && !_hasCenteredInitially) {
+      _mapController.move(_currentPosition!, 15.0);
+      _hasCenteredInitially = true;
+    }
   }
 
   Future<void> _initLocation() async {
@@ -45,13 +54,13 @@ class _MapScreenState extends State<MapScreen> {
 
     if (permission == LocationPermission.deniedForever) return;
 
-    // 1. Get initial position and center automatically
+    // 1. Get initial position
     try {
       final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       if (mounted) {
         setState(() {
           _currentPosition = LatLng(pos.latitude, pos.longitude);
-          if (!_hasCenteredInitially) {
+          if (!_hasCenteredInitially && _isMapReady) {
             _mapController.move(_currentPosition!, 15.0);
             _hasCenteredInitially = true;
           }
@@ -69,7 +78,7 @@ class _MapScreenState extends State<MapScreen> {
         setState(() {
           _currentPosition = LatLng(pos.latitude, pos.longitude);
           // If we haven't centered yet (maybe the initial get failed), center on first stream update
-          if (!_hasCenteredInitially) {
+          if (!_hasCenteredInitially && _isMapReady) {
             _mapController.move(_currentPosition!, 15.0);
             _hasCenteredInitially = true;
           }
@@ -94,7 +103,9 @@ class _MapScreenState extends State<MapScreen> {
         if (data.isNotEmpty) {
           final lat = double.parse(data[0]['lat']);
           final lon = double.parse(data[0]['lon']);
-          _mapController.move(LatLng(lat, lon), 13.0);
+          if (_isMapReady) {
+            _mapController.move(LatLng(lat, lon), 13.0);
+          }
           _hasCenteredInitially = true; // Stop auto-locating if user searched manually
           FocusScope.of(context).unfocus();
         } else {
@@ -109,7 +120,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _centerOnUser() {
-    if (_currentPosition != null) {
+    if (_currentPosition != null && _isMapReady) {
       _mapController.move(_currentPosition!, 15.0);
     } else {
       _initLocation(); // Re-trigger permission/fetch if it was missing
@@ -171,9 +182,10 @@ class _MapScreenState extends State<MapScreen> {
 
               return FlutterMap(
                 mapController: _mapController,
-                options: const MapOptions(
-                  initialCenter: LatLng(44.4759, -73.2121),
+                options: MapOptions(
+                  initialCenter: const LatLng(44.4759, -73.2121),
                   initialZoom: 13.0,
+                  onMapReady: _onMapReady,
                 ),
                 children: [
                   TileLayer(
