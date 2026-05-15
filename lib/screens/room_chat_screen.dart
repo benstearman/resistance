@@ -98,6 +98,9 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
 
     if (isImage) {
       final imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client);
+      final headers = {
+        'Authorization': 'Bearer ' + widget.room.client.accessToken.toString(),
+      };
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +112,10 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                 builder: (context) => Dialog(
                   backgroundColor: Colors.transparent,
                   child: InteractiveViewer(
-                    child: Image.network(imageUrl.toString()),
+                    child: Image.network(
+                      imageUrl.toString(),
+                      headers: headers,
+                    ),
                   ),
                 ),
               );
@@ -118,6 +124,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
                 imageUrl.toString(),
+                headers: headers,
                 width: 250,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
