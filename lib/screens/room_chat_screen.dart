@@ -151,15 +151,20 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                 },
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 250,
-                  color: Colors.black12,
-                  padding: const EdgeInsets.all(8),
+                  color: Colors.black87,
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.broken_image, color: Colors.grey, size: 40),
-                      const Text("Failed to load image", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      const Center(child: Icon(Icons.error_outline, color: Colors.orange, size: 40)),
+                      const SizedBox(height: 8),
+                      const Text("DEBUG: IMAGE LOAD FAILED", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
+                      const Divider(color: Colors.orange),
+                      Text("TYPE: " + msgType, style: const TextStyle(color: Colors.white, fontSize: 8)),
+                      Text("MXC: " + mxcUrl.toString(), style: const TextStyle(color: Colors.white, fontSize: 8)),
                       const SizedBox(height: 4),
-                      Text("URL: " + imageUrl.split('?').first, style: const TextStyle(color: Colors.red, fontSize: 8), overflow: TextOverflow.ellipsis),
+                      Text("URL: " + imageUrl, style: const TextStyle(color: Colors.yellow, fontSize: 8), softWrap: true),
                     ]
                   )
                 ),
@@ -226,7 +231,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                             margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isMe ? const Color(0xFFB71C1C) : Colors.grey[200],
+                              color: isMe ? Colors.orange[900] : Colors.grey[300],
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
