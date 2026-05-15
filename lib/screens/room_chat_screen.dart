@@ -157,14 +157,16 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Center(child: Icon(Icons.error_outline, color: Colors.orange, size: 40)),
+                      const Center(child: Icon(Icons.error_outline, color: Colors.yellow, size: 40)),
                       const SizedBox(height: 8),
-                      const Text("DEBUG: IMAGE LOAD FAILED", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10)),
-                      const Divider(color: Colors.orange),
+                      const Text("DEBUG: IMAGE LOAD FAILED", style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold, fontSize: 10)),
+                      const Divider(color: Colors.yellow),
                       Text("TYPE: " + msgType, style: const TextStyle(color: Colors.white, fontSize: 8)),
-                      Text("MXC: " + mxcUrl.toString(), style: const TextStyle(color: Colors.white, fontSize: 8)),
                       const SizedBox(height: 4),
-                      Text("URL: " + imageUrl, style: const TextStyle(color: Colors.yellow, fontSize: 8), softWrap: true),
+                      const Text("FULL URL (COPY ME):", style: TextStyle(color: Colors.yellow, fontSize: 8, fontWeight: FontWeight.bold)),
+                      SelectableText(imageUrl, style: const TextStyle(color: Colors.white, fontSize: 7)),
+                      const SizedBox(height: 4),
+                      Text("ERROR: " + error.toString(), style: const TextStyle(color: Colors.redAccent, fontSize: 7)),
                     ]
                   )
                 ),
