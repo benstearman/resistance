@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
 import 'screens/map_screen.dart';
 import 'screens/events_screen.dart';
 import 'screens/chat_screen.dart';
+import 'services/matrix_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,16 +19,17 @@ class AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<AppRoot> {
-  final Future<void> _initFuture = _initApp();
+  late Future<void> _initFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFuture = _initApp();
+  }
 
   static Future<void> _initApp() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    // Sign in anonymously so we can read the database securely
-    if (FirebaseAuth.instance.currentUser == null) {
-      await FirebaseAuth.instance.signInAnonymously();
-    }
+    // Initialize Matrix Service at the very beginning
+    await MatrixService.instance.init();
   }
 
   @override

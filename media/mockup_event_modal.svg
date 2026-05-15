@@ -1,0 +1,11 @@
+<svg width="400" height="800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="800" fill="#121212" />
+  <rect width="400" height="60" fill="#B71C1C" />
+  <text x="20" y="40" font-family="Arial" font-size="20" fill="white">Map View</text>
+  <rect y="400" width="400" height="400" rx="20" fill="#1E1E1E" />
+  <text x="20" y="440" font-family="Arial" font-size="20" fill="#B71C1C">Protest: Downtown</text>
+  <text x="20" y="470" font-family="Arial" font-size="14" fill="white">Time: 14:00 - 18:00</text>
+  <text x="20" y="495" font-family="Arial" font-size="14" fill="white">Status: Persistent State Event</text>
+  <rect x="50" y="700" width="300" height="50" rx="8" fill="#B71C1C" />
+  <text x="135" y="730" font-family="Arial" font-size="15" fill="white">JOIN CHAT</text>
+</svg>

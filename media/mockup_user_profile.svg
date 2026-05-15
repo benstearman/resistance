@@ -1,0 +1,12 @@
+<svg width="400" height="800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="800" fill="#121212" />
+  <rect width="400" height="60" fill="#B71C1C" />
+  <text x="20" y="40" font-family="Arial" font-size="20" fill="white">User Profile</text>
+  <circle cx="200" cy="150" r="50" fill="#333333" />
+  <text x="150" y="230" font-family="Arial" font-size="18" fill="white">Operative #12</text>
+  <text x="135" y="255" font-family="Arial" font-size="12" fill="#B71C1C">Identity: Verified [Lock]</text>
+  <rect x="50" y="300" width="300" height="50" rx="8" fill="#333333" stroke="#B71C1C" />
+  <text x="110" y="330" font-family="Arial" font-size="15" fill="white">MANAGE KEYS</text>
+  <rect x="50" y="370" width="300" height="50" rx="8" fill="#333333" />
+  <text x="115" y="400" font-family="Arial" font-size="15" fill="white">DEVICE LIST</text>
+</svg>

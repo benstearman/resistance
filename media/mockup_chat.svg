@@ -1,0 +1,13 @@
+<svg width="400" height="800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="800" fill="#121212" />
+  <rect width="400" height="60" fill="#B71C1C" />
+  <text x="20" y="40" font-family="Arial" font-size="20" fill="white">Secure Chat: Field Ops</text>
+  <path d="M360 25 h15 v15 h-15 z" fill="none" stroke="white" stroke-width="2" />
+  <rect x="20" y="100" width="200" height="40" rx="8" fill="#333333" />
+  <text x="30" y="125" font-family="Arial" font-size="12" fill="white">Rally point established.</text>
+  <rect x="180" y="160" width="200" height="40" rx="8" fill="#B71C1C" />
+  <text x="190" y="185" font-family="Arial" font-size="12" fill="white">Copy that. Approaching.</text>
+  <rect x="20" y="680" width="300" height="30" rx="15" fill="#333333" />
+  <text x="40" y="700" font-family="Arial" font-size="12" fill="#AAA">Message...</text>
+  <circle cx="360" cy="695" r="15" fill="#B71C1C" />
+</svg>

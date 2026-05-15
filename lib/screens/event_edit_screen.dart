@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import '../models/event.dart';
+import '../services/matrix_service.dart';
+import 'map_picker_screen.dart';
 
 class EventEditScreen extends StatefulWidget {
   final ProtestEvent? event; // If null, we are in "Add" mode
@@ -19,21 +21,27 @@ class _EventEditScreenState extends State<EventEditScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descController;
   late TextEditingController _locationNameController;
+  late TextEditingController _seriesController;
   
   // State
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
+  late double _latitude;
+  late double _longitude;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize data from existing event OR set defaults for new event
     final event = widget.event;
     _titleController = TextEditingController(text: event?.title ?? '');
     _descController = TextEditingController(text: event?.description ?? '');
     _locationNameController = TextEditingController(text: event?.locationName ?? '');
+    _seriesController = TextEditingController(text: event?.series ?? '');
     
+    _latitude = event?.latitude ?? 44.4759;
+    _longitude = event?.longitude ?? -73.2121;
+
     if (event != null) {
       _selectedDate = event.timestamp;
       _selectedTime = TimeOfDay.fromDateTime(event.timestamp);
@@ -48,6 +56,7 @@ class _EventEditScreenState extends State<EventEditScreen> {
     _titleController.dispose();
     _descController.dispose();
     _locationNameController.dispose();
+    _seriesController.dispose();
     super.dispose();
   }
 
@@ -55,16 +64,8 @@ class _EventEditScreenState extends State<EventEditScreen> {
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 3650)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFFB71C1C)),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) setState(() => _selectedDate = picked);
   }
@@ -73,16 +74,26 @@ class _EventEditScreenState extends State<EventEditScreen> {
     final picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFFB71C1C)),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) setState(() => _selectedTime = picked);
+  }
+
+  Future<void> _pickLocation() async {
+    final LatLng? picked = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapPickerScreen(
+          initialLocation: LatLng(_latitude, _longitude),
+        ),
+      ),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _latitude = picked.latitude;
+        _longitude = picked.longitude;
+      });
+    }
   }
 
   Future<void> _saveEvent() async {
@@ -91,7 +102,6 @@ class _EventEditScreenState extends State<EventEditScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // Combine Date and Time
       final fullDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -100,33 +110,25 @@ class _EventEditScreenState extends State<EventEditScreen> {
         _selectedTime.minute,
       );
 
-      final eventData = {
-        'title': _titleController.text.trim(),
-        'description': _descController.text.trim(),
-        'locationName': _locationNameController.text.trim(),
-        'timestamp': Timestamp.fromDate(fullDateTime),
-        // For now, we default to Burlington if it's a new event without coords
-        // In the future, we can add a "Pick on Map" feature
-        'latitude': widget.event?.latitude ?? 44.4759, 
-        'longitude': widget.event?.longitude ?? -73.2121,
-      };
+      final newEvent = ProtestEvent(
+        id: widget.event?.id ?? '', 
+        title: _titleController.text.trim(),
+        description: _descController.text.trim(),
+        locationName: _locationNameController.text.trim(),
+        series: _seriesController.text.trim().isEmpty ? null : _seriesController.text.trim(),
+        timestamp: fullDateTime,
+        latitude: _latitude, 
+        longitude: _longitude,
+        roomId: widget.event?.roomId,
+      );
 
-      if (widget.event == null) {
-        // ADD NEW
-        await FirebaseFirestore.instance.collection('events').add(eventData);
-      } else {
-        // UPDATE EXISTING
-        await FirebaseFirestore.instance
-            .collection('events')
-            .doc(widget.event!.id)
-            .update(eventData);
-      }
+      await MatrixService.instance.saveProtestEvent(newEvent);
 
-      if (mounted) Navigator.pop(context); // Go back
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving: $e')),
+        SnackBar(content: Text('Error saving to Matrix: $e')),
       );
       setState(() => _isSaving = false);
     }
@@ -141,10 +143,6 @@ class _EventEditScreenState extends State<EventEditScreen> {
         backgroundColor: const Color(0xFFB71C1C),
         foregroundColor: Colors.white,
         title: Text(isEditing ? 'Edit Action' : 'New Action'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context), // Explicit Back Button
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
@@ -159,77 +157,63 @@ class _EventEditScreenState extends State<EventEditScreen> {
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // TITLE
+                    TextFormField(
+                      controller: _seriesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Event Series (Optional, e.g. No Kings)',
+                        border: OutlineInputBorder(),
+                        helperText: "Group this event with others under a common movement name.",
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Event Title',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.title),
-                      ),
+                      decoration: const InputDecoration(labelText: 'Event Title', border: OutlineInputBorder()),
                       validator: (val) => val!.isEmpty ? 'Title is required' : null,
                     ),
                     const SizedBox(height: 16),
-
-                    // LOCATION NAME
                     TextFormField(
                       controller: _locationNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Location Name (e.g. City Hall)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.place),
-                      ),
+                      decoration: const InputDecoration(labelText: 'Location Name', border: OutlineInputBorder()),
                       validator: (val) => val!.isEmpty ? 'Location is required' : null,
                     ),
                     const SizedBox(height: 16),
-
-                    // DATE & TIME ROW
+                    OutlinedButton.icon(
+                      onPressed: _pickLocation,
+                      icon: const Icon(Icons.map, color: Color(0xFFB71C1C)),
+                      label: Text("COORDINATES: ${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: OutlinedButton(
                             onPressed: _selectDate,
-                            icon: const Icon(Icons.calendar_today, color: Color(0xFFB71C1C)),
-                            label: Text(DateFormat('MMM d, y').format(_selectedDate)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
+                            child: Text(DateFormat('MMM d, y').format(_selectedDate)),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: OutlinedButton(
                             onPressed: _selectTime,
-                            icon: const Icon(Icons.access_time, color: Color(0xFFB71C1C)),
-                            label: Text(_selectedTime.format(context)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
+                            child: Text(_selectedTime.format(context)),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-
-                    // DESCRIPTION
                     TextFormField(
                       controller: _descController,
                       maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: 'Description / Plan',
-                        border: OutlineInputBorder(),
-                        alignLabelWithHint: true,
-                      ),
+                      decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
                       validator: (val) => val!.isEmpty ? 'Description is required' : null,
                     ),
-                    
                     const SizedBox(height: 24),
-                    
-                    // BIG SAVE BUTTON
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -238,7 +222,6 @@ class _EventEditScreenState extends State<EventEditScreen> {
                           backgroundColor: const Color(0xFFB71C1C),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         child: Text(isEditing ? 'Update Event' : 'Create Event'),
                       ),

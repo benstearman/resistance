@@ -1,0 +1,14 @@
+<svg width="400" height="800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="800" fill="#121212" />
+  <rect width="400" height="60" fill="#B71C1C" />
+  <text x="20" y="40" font-family="Arial" font-size="20" fill="white">Verify Identity</text>
+  <text x="60" y="100" font-family="Arial" font-size="14" fill="white">Scan to verify this operative</text>
+  <rect x="100" y="150" width="200" height="200" fill="white" />
+  <rect x="110" y="160" width="40" height="40" fill="black" />
+  <rect x="250" y="160" width="40" height="40" fill="black" />
+  <rect x="110" y="300" width="40" height="40" fill="black" />
+  <rect x="160" y="210" width="80" height="80" fill="black" />
+  <text x="145" y="400" font-family="monospace" font-size="18" fill="white">1234 5678</text>
+  <rect x="50" y="600" width="300" height="50" rx="8" fill="#B71C1C" />
+  <text x="120" y="630" font-family="Arial" font-size="15" fill="white">VERIFY SUCCESS</text>
+</svg>

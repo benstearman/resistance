@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:matrix/matrix.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+import 'dart:async';
+import '../models/event.dart';
 
 // Database Engines
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -12,10 +13,14 @@ class MatrixService {
   factory MatrixService() => instance;
   MatrixService._internal();
 
+  static const String resistanceSpaceId = "!snUnIBgkbcAdunBeQa:resistance.chat";
+  static const String protestEventType = "chat.resistance.protest_event";
+
   Client? client;
 
   Future<void> init() async {
-    // 1. Pick the right Database Factory for the platform
+    if (client != null) return;
+
     DatabaseFactory dbFactory;
     if (kIsWeb) {
       dbFactory = databaseFactoryFfiWeb;
@@ -24,34 +29,252 @@ class MatrixService {
       dbFactory = databaseFactoryFfi;
     }
 
-    // 2. Open the Database (Memory for now to avoid file issues)
-    final rawDatabase = await dbFactory.openDatabase(inMemoryDatabasePath);
-
-    // 3. Initialize the Matrix Database Wrapper
+    final rawDatabase = await dbFactory.openDatabase('resistance_matrix.db');
     final matrixDatabase = await MatrixSdkDatabase.init(
       'resistance_client',
       database: rawDatabase,
     );
 
-    // 4. Create the Client with the new 'database' parameter
     client = Client(
       'Resistance App',
       database: matrixDatabase,
+      supportedLoginTypes: {AuthenticationTypes.password, 'm.login.dummy'},
     );
+
+    // Ensure our custom state events are always loaded
+    client!.importantStateEvents.add(protestEventType);
 
     await client!.init();
   }
 
   Future<void> login(String username, String password) async {
     if (client == null) await init();
-    
-    // FIX: Added the second closing parenthesis here ))
     await client!.checkHomeserver(Uri.parse("https://matrix.resistance.chat"));
-    
+
+    if (client!.isLogged()) {
+      await client!.logout();
+    }
+
     await client!.login(
       LoginType.mLoginPassword,
       password: password,
       identifier: AuthenticationUserIdentifier(user: username),
+    );
+  }
+
+  /// Registers and logs in a temporary guest account for anonymous access.
+  Future<void> loginAsGuest() async {
+    if (client == null) await init();
+    
+    // Only proceed if not already logged in
+    if (client!.isLogged()) return;
+
+    try {
+      print("Attempting Guest Login...");
+      await client!.checkHomeserver(Uri.parse("https://matrix.resistance.chat"));
+      
+      // 1. Try to register a guest account
+      try {
+        await client!.register(kind: AccountKind.guest);
+      } catch (e) {
+        print("Standard guest registration failed, trying shared system account...");
+        // 2. Fallback: Login to a dedicated shared read-only account
+        // You should create this account once on your server: @guest:resistance.chat
+        await client!.login(
+          LoginType.mLoginPassword,
+          password: "guest_password_123", // Replace with a secure but shared password
+          identifier: AuthenticationUserIdentifier(user: "guest"),
+        );
+      }
+
+      print("Logged in for anonymous access: \${client!.userID}");
+      await Future.delayed(const Duration(seconds: 2));
+      await client!.sync();
+    } catch (e) {
+      print("Anonymous access failed completely: \$e");
+    }
+  }
+
+  /// Returns a stream of all protest events specifically from the registry space.
+  Stream<List<ProtestEvent>> getProtestEvents() {
+    if (client == null) return Stream.value([]);
+
+    final controller = StreamController<List<ProtestEvent>>();
+    
+    Future<void> fetchEvents() async {
+      try {
+        final List<ProtestEvent> events = [];
+        // Fetch ALL state events for the resistance registry space
+        final stateEvents = await client!.getRoomState(resistanceSpaceId);
+        
+        for (final event in stateEvents) {
+          if (event.type == protestEventType && event.content.isNotEmpty) {
+            final id = event.stateKey?.isNotEmpty == true ? event.stateKey! : (event.eventId ?? 'unknown');
+            events.add(ProtestEvent.fromMap(id, event.content));
+          }
+        }
+        
+        if (!controller.isClosed) {
+          controller.add(events);
+        }
+      } catch (e) {
+        print("Failed to fetch state events from registry space: \$e");
+        // We don't fallback to calculation here because the requirement is to use the space for the map.
+        if (!controller.isClosed) {
+          controller.add([]);
+        }
+      }
+    }
+
+    // 1. Initial fetch
+    fetchEvents();
+
+    // 2. Listen for future syncs to re-fetch
+    final subscription = client!.onSync.stream.listen((_) {
+      fetchEvents();
+    });
+
+    controller.onCancel = () {
+      subscription.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
+  }
+
+  Future<void> _ensureJoined(String roomId) async {
+    if (client == null) throw Exception("DIAGNOSTIC: Matrix client is NULL.");
+    
+    print("DIAGNOSTIC: Checking membership for $roomId");
+    try {
+      final room = client!.getRoomById(roomId);
+      final membership = room?.membership;
+      print("DIAGNOSTIC: Current local membership for $roomId is: $membership");
+      
+      if (room == null || membership != Membership.join) {
+        print("DIAGNOSTIC: Attempting joinRoomById($roomId)...");
+        try {
+          await client!.joinRoomById(roomId);
+          print("DIAGNOSTIC: joinRoomById call finished successfully.");
+        } catch (joinErr) {
+          print("DIAGNOSTIC: joinRoomById FAILED: $joinErr");
+          throw Exception("JOIN_FAILED: Could not join $roomId. Error: $joinErr");
+        }
+        
+        await Future.delayed(const Duration(milliseconds: 1000));
+        final postJoinRoom = client!.getRoomById(roomId);
+        print("DIAGNOSTIC: Post-join local membership: ${postJoinRoom?.membership}");
+      }
+    } catch (e) {
+      print("DIAGNOSTIC: _ensureJoined top-level error: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> saveProtestEvent(ProtestEvent event, {String? targetRoomId}) async {
+    if (client == null) throw Exception("DIAGNOSTIC: Matrix client is NULL in saveProtestEvent.");
+
+    print("DIAGNOSTIC: Starting saveProtestEvent...");
+
+    // 1. Ensure membership in the Registry Space
+    try {
+      await _ensureJoined(resistanceSpaceId);
+    } catch (e) {
+      throw Exception("STEP_1_FAILED (Join Space): $e");
+    }
+
+    String actionChatRoomId;
+    final isNewEvent = event.id.isEmpty || event.id.startsWith('stripped_');
+
+    if (isNewEvent && targetRoomId == null) {
+      print("DIAGNOSTIC: Step 2 - Creating new room...");
+      try {
+        final serverHost = client!.homeserver?.host ?? 'matrix.resistance.chat';
+        actionChatRoomId = await client!.createRoom(
+          name: event.title,
+          topic: event.description,
+          preset: CreateRoomPreset.publicChat,
+          initialState: [
+            StateEvent(
+              type: 'm.space.parent',
+              stateKey: resistanceSpaceId,
+              content: {
+                'via': [serverHost],
+                'canonical': true
+              },
+            ),
+          ],
+        );
+        print("DIAGNOSTIC: Created room $actionChatRoomId");
+
+        // 2. Link the new room as a child of the registry space
+        try {
+          print("DIAGNOSTIC: Step 2b - Linking to space...");
+          await client!.setRoomStateWithKey(
+            resistanceSpaceId,
+            'm.space.child',
+            actionChatRoomId,
+            {
+              'via': [serverHost]
+            },
+          );
+          print("DIAGNOSTIC: Linked to space successfully.");
+        } catch (linkErr) {
+          print("DIAGNOSTIC: Linking FAILED: $linkErr");
+          // Non-critical, continue
+        }
+      } catch (createErr) {
+        throw Exception("STEP_2_FAILED (Create Room): $createErr");
+      }
+    } else {
+      actionChatRoomId = targetRoomId ?? event.roomId ?? '';
+      if (actionChatRoomId.isEmpty) {
+        throw Exception("STEP_2_FAILED: No target room ID.");
+      }
+    }
+
+    final content = {
+      'title': event.title,
+      'description': event.description,
+      'locationName': event.locationName,
+      'timestamp': event.timestamp.millisecondsSinceEpoch,
+      'latitude': event.latitude.toString(),
+      'longitude': event.longitude.toString(),
+      if (event.series != null) 'series': event.series,
+      'roomId': actionChatRoomId,
+    };
+
+    final String stateKey = isNewEvent
+        ? DateTime.now().millisecondsSinceEpoch.toString()
+        : event.id;
+
+    // 3. PUBLISH REGISTRY ENTRY
+    print("DIAGNOSTIC: Step 3 - Publishing registry entry...");
+    try {
+      await client!.setRoomStateWithKey(
+        resistanceSpaceId,
+        protestEventType,
+        stateKey,
+        content,
+      );
+      print("DIAGNOSTIC: Successfully published registry entry.");
+    } catch (publishErr) {
+      print("DIAGNOSTIC: Step 3 FAILED: $publishErr");
+      throw Exception("STEP_3_FAILED (Publish Metadata): $publishErr");
+    }
+  }
+
+  /// Deletes a protest event by clearing its registry entry in the space.
+  Future<void> deleteProtestEvent(String eventId) async {
+    if (client == null) return;
+
+    await _ensureJoined(resistanceSpaceId);
+
+    await client!.setRoomStateWithKey(
+      resistanceSpaceId,
+      protestEventType,
+      eventId,
+      {},
     );
   }
 }
