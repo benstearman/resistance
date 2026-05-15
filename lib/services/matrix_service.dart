@@ -183,11 +183,12 @@ class MatrixService {
       throw Exception("STEP_1_FAILED (Join Space): $e");
     }
 
-    String actionChatRoomId;
+    String actionChatRoomId = targetRoomId ?? event.roomId ?? '';
     final isNewEvent = event.id.isEmpty || event.id.startsWith('stripped_');
 
-    if (isNewEvent && targetRoomId == null) {
-      print("DIAGNOSTIC: Step 2 - Creating new room...");
+    // Consolidate room creation logic: If we don't have a roomId, create one now.
+    if (actionChatRoomId.isEmpty) {
+      print("DIAGNOSTIC: Step 2 - Creating new room (needed for ${isNewEvent ? 'new' : 'update'})...");
       try {
         final serverHost = client!.homeserver?.host ?? 'matrix.resistance.chat';
         actionChatRoomId = await client!.createRoom(
@@ -207,7 +208,7 @@ class MatrixService {
         );
         print("DIAGNOSTIC: Created room $actionChatRoomId");
 
-        // 2. Link the new room as a child of the registry space
+        // Link the new room as a child of the registry space
         try {
           print("DIAGNOSTIC: Step 2b - Linking to space...");
           await client!.setRoomStateWithKey(
@@ -225,11 +226,6 @@ class MatrixService {
         }
       } catch (createErr) {
         throw Exception("STEP_2_FAILED (Create Room): $createErr");
-      }
-    } else {
-      actionChatRoomId = targetRoomId ?? event.roomId ?? '';
-      if (actionChatRoomId.isEmpty) {
-        throw Exception("STEP_2_FAILED: No target room ID.");
       }
     }
 
