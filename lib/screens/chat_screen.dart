@@ -21,31 +21,39 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _checkSession() async {
     await MatrixService.instance.init();
-    if (MatrixService.instance.client?.isLogged() ?? false) {
+    final service = MatrixService.instance;
+    if ((service.client?.isLogged() ?? false) && !service.isGuest) {
       setState(() => _isLoggedIn = true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final service = MatrixService.instance;
+    final bool actuallyLoggedIn = _isLoggedIn && !service.isGuest;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Secure Network'),
         backgroundColor: const Color(0xFFB71C1C),
         foregroundColor: Colors.white,
         actions: [
-          if (_isLoggedIn)
+          if (actuallyLoggedIn)
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () async {
-                await MatrixService.instance.client?.logout();
+                try {
+                  await MatrixService.instance.client?.logout();
+                } catch (e) {
+                  print("Logout failed: $e");
+                }
                 setState(() => _isLoggedIn = false);
               },
             ),
         ],
       ),
-      body: _isLoggedIn 
-          ? const ChatRoomList() 
+      body: actuallyLoggedIn 
+          ? ChatRoomList(onLogout: () => setState(() => _isLoggedIn = false)) 
           : ChatLoginScreen(onLoginSuccess: () => setState(() => _isLoggedIn = true)),
     );
   }

@@ -6,7 +6,8 @@ import 'invite_scanner_screen.dart';
 import 'room_chat_screen.dart';
 
 class ChatRoomList extends StatelessWidget {
-  const ChatRoomList({super.key});
+  final VoidCallback onLogout;
+  const ChatRoomList({super.key, required this.onLogout});
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +61,14 @@ class ChatRoomList extends StatelessWidget {
                       ),
                       const SizedBox(height: 32),
                       TextButton(
-                        onPressed: () async => await client.logout(),
+                        onPressed: () async {
+                          try {
+                            await client.logout();
+                          } catch (e) {
+                            print("Logout failed: $e");
+                          }
+                          onLogout();
+                        },
                         child: const Text("LOGOUT / SWITCH ACCOUNT"),
                       ),
                     ],

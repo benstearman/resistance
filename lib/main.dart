@@ -5,6 +5,7 @@ import 'screens/map_screen.dart';
 import 'screens/events_screen.dart';
 import 'screens/chat_screen.dart';
 import 'services/matrix_service.dart';
+import 'widgets/notification_banner.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,7 +91,12 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: Column(
+        children: [
+          const NotificationBanner(),
+          Expanded(child: _screens[_selectedIndex]),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),

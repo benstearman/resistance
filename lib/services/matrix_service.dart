@@ -18,6 +18,8 @@ class MatrixService {
 
   Client? client;
 
+  bool get isGuest => client?.userID?.contains('guest') ?? false;
+
   Future<void> init() async {
     if (client != null) return;
 
