@@ -89,50 +89,47 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
     final bool isImageMsg = msgType == 'm.image' || msgType == 'MessageTypes.Image';
     final bool isFileMsg = msgType == 'm.file' || msgType == 'MessageTypes.File';
     
-    // Extremely permissive image check
+    // Robust image check: Has an MXC URL and either is an image type or has image extension in body
     final bool isImage = mxcUrl != null && mxcUrl.startsWith('mxc://') && (
       isImageMsg || 
-      event.body.toLowerCase().contains(RegExp(r'\.(png|jpe?g|gif|webp)$')) ||
+      event.body.toLowerCase().contains(".jpg") ||
+      event.body.toLowerCase().contains(".jpeg") ||
+      event.body.toLowerCase().contains(".png") ||
+      event.body.toLowerCase().contains(".gif") ||
+      event.body.toLowerCase().contains(".webp") ||
       (info is Map && info['mimetype']?.toString().contains('image') == true)
     );
 
     if (isImage) {
       // MSC3916: Authenticated Media Download
-      // The SDK helper Uri.getDownloadUri often returns the legacy /_matrix/media/v3 path which returns 404 on this server.
-      // We manually construct the /_matrix/client/v1/media/download path and use query-param auth for Web compatibility.
-      
       String imageUrl = "";
       final token = widget.room.client.accessToken;
       try {
         final uri = Uri.parse(mxcUrl!);
         final serverName = uri.host;
-        final mediaId = uri.path.replaceAll('/', '');
+        final mediaId = uri.path.split('/').lastWhere((s) => s.isNotEmpty);
         final homeserver = widget.room.client.homeserver.toString().replaceAll(RegExp(r'/$'), '');
         imageUrl = "$homeserver/_matrix/client/v1/media/download/$serverName/$mediaId?access_token=$token";
       } catch (e) {
-        // Fallback to SDK if parsing fails
         imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client).toString() + "&access_token=$token";
       }
       
-      print("DIAGNOSTIC: Constructed Image URL: " + imageUrl);
+      final headers = {
+        'Authorization': 'Bearer ' + token.toString(),
+      };
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // DEBUG INFO (Visible in red at the bottom of the bubble if image fails)
           GestureDetector(
-            onLongPress: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Image URL: " + imageUrl))
-              );
-              print("IMAGE URL DEBUG: " + imageUrl);
-            },
             onTap: () {
               showDialog(
                 context: context,
                 builder: (context) => Dialog(
                   backgroundColor: Colors.transparent,
                   child: InteractiveViewer(
-                    child: Image.network(imageUrl),
+                    child: Image.network(imageUrl, headers: headers),
                   ),
                 ),
               );
@@ -141,6 +138,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
                 imageUrl,
+                headers: headers,
                 width: 250,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
@@ -151,17 +149,18 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                     child: Center(child: CircularProgressIndicator()),
                   );
                 },
-                errorBuilder: (context, error, stackTrace) => const SizedBox(
+                errorBuilder: (context, error, stackTrace) => Container(
                   width: 250,
-                  height: 150,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.broken_image, color: Colors.grey, size: 40),
-                        Text("Failed to load image", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      ]
-                    )
+                  color: Colors.black12,
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                      const Text("Failed to load image", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text("URL: " + imageUrl.split('?').first, style: const TextStyle(color: Colors.red, fontSize: 8), overflow: TextOverflow.ellipsis),
+                    ]
                   )
                 ),
               ),
