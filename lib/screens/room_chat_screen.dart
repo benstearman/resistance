@@ -97,7 +97,22 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
     );
 
     if (isImage) {
-      final imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client);
+      // MSC3916: Authenticated Media Download
+      // The SDK helper Uri.getDownloadUri often returns the legacy /_matrix/media/v3 path which returns 404 on this server.
+      // We manually construct the /_matrix/client/v1/media/download path.
+      
+      String imageUrl = "";
+      try {
+        final uri = Uri.parse(mxcUrl!);
+        final serverName = uri.host;
+        final mediaId = uri.path.replaceAll('/', '');
+        final homeserver = widget.room.client.homeserver.toString().replaceAll(RegExp(r'/$'), '');
+        imageUrl = "$homeserver/_matrix/client/v1/media/download/$serverName/$mediaId";
+      } catch (e) {
+        // Fallback to SDK if parsing fails
+        imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client).toString();
+      }
+
       final headers = {
         'Authorization': 'Bearer ' + widget.room.client.accessToken.toString(),
       };
@@ -113,7 +128,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                   backgroundColor: Colors.transparent,
                   child: InteractiveViewer(
                     child: Image.network(
-                      imageUrl.toString(),
+                      imageUrl,
                       headers: headers,
                     ),
                   ),
@@ -123,7 +138,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                imageUrl.toString(),
+                imageUrl,
                 headers: headers,
                 width: 250,
                 fit: BoxFit.cover,
