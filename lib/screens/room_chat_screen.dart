@@ -69,13 +69,17 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
 
   Widget _buildMessageContent(Event event, bool isMe) {
     final msgType = event.content['msgtype'];
+    final info = event.content['info'];
+    final String? mxcUrl = event.content['url'] ?? (info is Map ? info['url'] : null);
+    
+    // DEBUG LOG - Using proper string concatenation to avoid interpolation issues in tool
+    print("DIAGNOSTIC: Message Event - ID: " + event.eventId + ", Type: " + msgType.toString() + ", Body: " + event.body + ", Content: " + event.content.toString());
+
     final isImageMsg = msgType == MessageTypes.Image || msgType == 'm.image';
     final isFileMsg = msgType == MessageTypes.File || msgType == 'm.file';
     
-    final mxcUrl = event.content['url'];
-    
-    // Check if it's an image message directly, or a file message that has an image extension
-    final bool isImage = mxcUrl is String && (
+    // Robust image check: Has an MXC URL and either is an image type or has image extension in body
+    final bool isImage = mxcUrl is String && mxcUrl.startsWith('mxc://') && (
       isImageMsg || 
       (isFileMsg && event.body.toLowerCase().contains(RegExp(r'\.(png|jpe?g|gif|webp)$')))
     );
