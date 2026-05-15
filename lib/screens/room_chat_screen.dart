@@ -102,26 +102,28 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
 
     if (isImage) {
       // MSC3916: Authenticated Media Download
+      // We use ONLY the access_token query parameter. 
+      // Mixing both Header and Query Token causes 401 error on this server.
+      
       String imageUrl = "";
       final token = widget.room.client.accessToken;
       try {
         final uri = Uri.parse(mxcUrl!);
         final serverName = uri.host;
-        final mediaId = uri.path.split('/').lastWhere((s) => s.isNotEmpty);
+        final mediaId = uri.path.split('/').lastWhere((s) => s.isNotEmpty, orElse: () => "");
         final homeserver = widget.room.client.homeserver.toString().replaceAll(RegExp(r'/$'), '');
+        
+        // Manual construction of the authenticated path
         imageUrl = "$homeserver/_matrix/client/v1/media/download/$serverName/$mediaId?access_token=$token";
       } catch (e) {
-        imageUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client).toString() + "&access_token=$token";
+        // Fallback to SDK if parsing fails, but ensure token is added
+        final sdkUrl = Uri.parse(mxcUrl!).getDownloadUri(widget.room.client).toString();
+        imageUrl = sdkUrl + (sdkUrl.contains('?') ? '&' : '?') + "access_token=$token";
       }
       
-      final headers = {
-        'Authorization': 'Bearer ' + token.toString(),
-      };
-
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // DEBUG INFO (Visible in red at the bottom of the bubble if image fails)
           GestureDetector(
             onTap: () {
               showDialog(
@@ -129,7 +131,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                 builder: (context) => Dialog(
                   backgroundColor: Colors.transparent,
                   child: InteractiveViewer(
-                    child: Image.network(imageUrl, headers: headers),
+                    child: Image.network(imageUrl),
                   ),
                 ),
               );
@@ -138,7 +140,6 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
                 imageUrl,
-                headers: headers,
                 width: 250,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
@@ -163,7 +164,7 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
                       const Divider(color: Colors.yellow),
                       Text("TYPE: " + msgType, style: const TextStyle(color: Colors.white, fontSize: 8)),
                       const SizedBox(height: 4),
-                      const Text("FULL URL (COPY ME):", style: TextStyle(color: Colors.yellow, fontSize: 8, fontWeight: FontWeight.bold)),
+                      const Text("STRICT AUTH URL:", style: TextStyle(color: Colors.yellow, fontSize: 8, fontWeight: FontWeight.bold)),
                       SelectableText(imageUrl, style: const TextStyle(color: Colors.white, fontSize: 7)),
                       const SizedBox(height: 4),
                       Text("ERROR: " + error.toString(), style: const TextStyle(color: Colors.redAccent, fontSize: 7)),
