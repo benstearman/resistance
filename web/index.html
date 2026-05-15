@@ -15,15 +15,26 @@
   <script>console.log("RESISTANCE BUILD TIMESTAMP: " + new Date().toISOString());</script>
 </head>
 <body>
-  <div id="loading-indicator" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #1a1a1a; color: #f1c40f; font-family: sans-serif; flex-direction: column;">
-    <div style="border: 4px solid #333; border-top: 4px solid #f1c40f; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-    <h2>INITIALIZING RESISTANCE v1.0.26-FINAL-DEBUG...</h2>
+  <div id="loading-indicator" style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #1a1a1a; color: #9b59b6; font-family: sans-serif; flex-direction: column;">
+    <div style="border: 4px solid #333; border-top: 4px solid #9b59b6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+    <h2>INITIALIZING RESISTANCE v1.0.26-CACHE-KILLER...</h2>
     <style>
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       body { margin: 0; background-color: #1a1a1a; }
     </style>
   </div>
-  
-  <script src="flutter_bootstrap.js?v=202605152115" async></script>
-</body>
+
+  <script>
+    if (!window._flutter) { window._flutter = {}; }
+    window._flutter.buildConfig = {
+      "engineRevision": "587c18f873b8ab57330422bce09047420d9c7f42",
+      "builds": [{
+        "compileTarget": "dart2js",
+        "renderer": "canvaskit",
+        "mainJsPath": "main_v1026.js"
+      }]
+    };
+  </script>
+  <script src="flutter_bootstrap.js?v=202605152125" async></script>
+  </body>
 </html>
