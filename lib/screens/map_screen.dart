@@ -33,8 +33,17 @@ class _MapScreenState extends State<MapScreen> {
   void _onMapReady() {
     setState(() => _isMapReady = true);
     if (_currentPosition != null && !_hasCenteredInitially) {
-      _mapController.move(_currentPosition!, 15.0);
+      _safeMapMove(_currentPosition!, 15.0);
       _hasCenteredInitially = true;
+    }
+  }
+
+  void _safeMapMove(LatLng point, double zoom) {
+    if (!_isMapReady) return;
+    try {
+      _mapController.move(point, zoom);
+    } catch (e) {
+      print("DIAGNOSTIC: Map move failed: $e");
     }
   }
 
@@ -61,7 +70,7 @@ class _MapScreenState extends State<MapScreen> {
         setState(() {
           _currentPosition = LatLng(pos.latitude, pos.longitude);
           if (!_hasCenteredInitially && _isMapReady) {
-            _mapController.move(_currentPosition!, 15.0);
+            _safeMapMove(_currentPosition!, 15.0);
             _hasCenteredInitially = true;
           }
         });
@@ -79,7 +88,7 @@ class _MapScreenState extends State<MapScreen> {
           _currentPosition = LatLng(pos.latitude, pos.longitude);
           // If we haven't centered yet (maybe the initial get failed), center on first stream update
           if (!_hasCenteredInitially && _isMapReady) {
-            _mapController.move(_currentPosition!, 15.0);
+            _safeMapMove(_currentPosition!, 15.0);
             _hasCenteredInitially = true;
           }
         });
@@ -104,7 +113,7 @@ class _MapScreenState extends State<MapScreen> {
           final lat = double.parse(data[0]['lat']);
           final lon = double.parse(data[0]['lon']);
           if (_isMapReady) {
-            _mapController.move(LatLng(lat, lon), 13.0);
+            _safeMapMove(LatLng(lat, lon), 13.0);
           }
           _hasCenteredInitially = true; // Stop auto-locating if user searched manually
           FocusScope.of(context).unfocus();
@@ -121,7 +130,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void _centerOnUser() {
     if (_currentPosition != null && _isMapReady) {
-      _mapController.move(_currentPosition!, 15.0);
+      _safeMapMove(_currentPosition!, 15.0);
     } else {
       _initLocation(); // Re-trigger permission/fetch if it was missing
     }

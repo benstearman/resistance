@@ -87,11 +87,11 @@ class MatrixService {
         );
       }
 
-      print("Logged in for anonymous access: ${client!.userID}");
+      print("Logged in for anonymous access: " + client!.userID.toString());
       await Future.delayed(const Duration(seconds: 2));
       await client!.sync();
     } catch (e) {
-      print("Anonymous access failed completely: $e");
+      print("Anonymous access failed completely: " + e.toString());
     }
   }
 
@@ -118,7 +118,7 @@ class MatrixService {
           controller.add(events);
         }
       } catch (e) {
-        print("Failed to fetch state events from registry space: $e");
+        print("Failed to fetch state events from registry space: " + e.toString());
         // We don't fallback to calculation here because the requirement is to use the space for the map.
         if (!controller.isClosed) {
           controller.add([]);
@@ -230,10 +230,10 @@ class MatrixService {
       } catch (createErr) {
         String detailedError = createErr.toString();
         if (createErr is MatrixException) {
-          detailedError = "[\${createErr.error}] \${createErr.errorMessage}";
+          detailedError = "[" + createErr.error.toString() + "] " + createErr.errorMessage.toString();
         }
-        print("DIAGNOSTIC: createRoom FAILED: $detailedError");
-        throw Exception("STEP_2_FAILED (Create Room): $detailedError");
+        print("DIAGNOSTIC: createRoom FAILED: " + detailedError);
+        throw Exception("STEP_2_FAILED (Create Room): " + detailedError);
       }
     }
 

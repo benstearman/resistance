@@ -49,14 +49,15 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
     );
 
     try {
+      final String extension = file.extension ?? 'png';
       await widget.room.sendFileEvent(
         MatrixFile(
           bytes: file.bytes!,
           name: file.name,
-          mimeType: "image/\${file.extension ?? 'png'}",
+          mimeType: "image/$extension",
         ),
         extraContent: {
-          "msgtype": MessageTypes.Image,
+          "msgtype": "m.image",
         },
       );
     } catch (e) {
@@ -68,9 +69,10 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
   }
 
   Widget _buildMessageContent(Event event, bool isMe) {
-    final msgType = event.content['msgtype'];
-    final info = event.content['info'];
-    final file = event.content['file'];
+    final dynamic msgTypeRaw = event.content['msgtype'];
+    final String msgType = msgTypeRaw?.toString() ?? '';
+    final dynamic info = event.content['info'];
+    final dynamic file = event.content['file'];
     
     // Check multiple possible URL locations
     String? mxcUrl;
@@ -84,25 +86,14 @@ class _RoomChatScreenState extends State<RoomChatScreen> {
       mxcUrl = info['thumbnail_url'] as String;
     }
     
-    // DEBUG LOG - Using extremely safe concatenation
-    try {
-      final logId = event.eventId.toString();
-      final logType = msgType?.toString() ?? "null";
-      final logBody = event.body.toString();
-      final logContent = event.content.toString();
-      print("DIAGNOSTIC: Message Event - ID: " + logId + ", Type: " + logType + ", Body: " + logBody + ", URL: " + (mxcUrl ?? "NONE") + ", Content: " + logContent);
-    } catch (e) {
-      print("DIAGNOSTIC: Failed to log event info");
-    }
-
-    final isImageMsg = msgType == MessageTypes.Image || msgType == 'm.image';
-    final isFileMsg = msgType == MessageTypes.File || msgType == 'm.file';
+    final bool isImageMsg = msgType == 'm.image' || msgType == 'MessageTypes.Image';
+    final bool isFileMsg = msgType == 'm.file' || msgType == 'MessageTypes.File';
     
-    // Robust image check: Has an MXC URL and either is an image type or has image extension in body
+    // Extremely permissive image check
     final bool isImage = mxcUrl != null && mxcUrl.startsWith('mxc://') && (
       isImageMsg || 
-      (isFileMsg && event.body.toLowerCase().contains(RegExp(r'\.(png|jpe?g|gif|webp)$'))) ||
-      event.body.toLowerCase().contains("image")
+      event.body.toLowerCase().contains(RegExp(r'\.(png|jpe?g|gif|webp)$')) ||
+      (info is Map && info['mimetype']?.toString().contains('image') == true)
     );
 
     if (isImage) {
