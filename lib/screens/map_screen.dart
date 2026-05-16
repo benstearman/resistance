@@ -27,7 +27,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    _initLocation();
+    // Removed _initLocation() to prevent early permission prompt
   }
 
   void _onMapReady() {
@@ -128,11 +128,60 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _centerOnUser() {
+  Future<void> _centerOnUser() async {
     if (_currentPosition != null && _isMapReady) {
       _safeMapMove(_currentPosition!, 15.0);
     } else {
-      _initLocation(); // Re-trigger permission/fetch if it was missing
+      // If we don't have a position, explicitly request and fetch it
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location services are disabled.")),
+          );
+        }
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Location permissions are denied.")),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location permissions are permanently denied.")),
+          );
+        }
+        return;
+      }
+
+      try {
+        final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        if (mounted) {
+          setState(() {
+            _currentPosition = LatLng(pos.latitude, pos.longitude);
+            if (_isMapReady) {
+              _safeMapMove(_currentPosition!, 15.0);
+            }
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error getting location: $e")),
+          );
+        }
+      }
     }
   }
 

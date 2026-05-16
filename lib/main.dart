@@ -91,11 +91,13 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          const NotificationBanner(),
-          Expanded(child: _screens[_selectedIndex]),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            const NotificationBanner(),
+            Expanded(child: _screens[_selectedIndex]),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [

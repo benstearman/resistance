@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:matrix/matrix.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
+import 'dart:io';
 import '../models/event.dart';
 
 // Database Engines
+import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
@@ -26,6 +28,8 @@ class MatrixService {
     DatabaseFactory dbFactory;
     if (kIsWeb) {
       dbFactory = databaseFactoryFfiWeb;
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      dbFactory = databaseFactory;
     } else {
       sqfliteFfiInit();
       dbFactory = databaseFactoryFfi;
